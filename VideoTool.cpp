@@ -11,11 +11,17 @@ using namespace cv;
 //initial min and max HSV filter values.
 //these will be changed using trackbars
 int H_MIN = 169;
-int H_MAX = 256;
-int S_MIN = 0;
+int H_MAX = 185;
+int S_MIN = 20;
 int S_MAX = 256;
-int V_MIN = 0;
+int V_MIN = 105;
 int V_MAX = 256;
+int H_MIN2 = 27;
+int H_MAX2 = 185;
+int S_MIN2 = 65;
+int S_MAX2 = 256;
+int V_MIN2 = 108;
+int V_MAX2 = 256;
 //default capture width and height
 const int FRAME_WIDTH = 640;
 const int FRAME_HEIGHT = 480;
@@ -189,7 +195,7 @@ int main(int argc, char* argv[])
 	//matrix storage for HSV image
 	Mat HSV;
 	//matrix storage for binary threshold image
-	Mat threshold, threshold1;
+	Mat threshold;
 	//x and y values for the location of the object
 	int x = 0, y = 0;
 	//create slider bars for HSV filtering
@@ -208,6 +214,8 @@ int main(int argc, char* argv[])
 
 	
 	while (1) {
+
+
 		//store image to matrix
 		capture.read(cameraFeed);
 		//convert frame from BGR to HSV colorspace
@@ -217,31 +225,43 @@ int main(int argc, char* argv[])
 		inRange(HSV, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), threshold);
 		//perform morphological operations on thresholded image to eliminate noise
 		//and emphasize the filtered object(s)
-		if (useMorphOps){
-			morphOps(threshold);		
-		}	
+		if (useMorphOps)
+			morphOps(threshold);
 		//pass in thresholded frame to our object tracking function
 		//this function will return the x and y coordinates of the
 		//filtered object
-
-		if (trackObjects){
+		if (trackObjects)
 			trackFilteredObject(x, y, threshold, cameraFeed);
-		}
-		imshow(windowName2, threshold);
-
-
-		inRange(HSV, Scalar(28, S_MIN, V_MIN), Scalar(31, S_MAX, V_MAX), threshold1);
-		if (useMorphOps){
-			morphOps(threshold1);		
-		}	
-		if (trackObjects){
-			trackFilteredObject(x, y, threshold1, cameraFeed);
-		}
 
 		//show frames
-		imshow(windowName2, threshold1);
+		imshow(windowName2, threshold);
 		imshow(windowName, cameraFeed);
-		//imshow(windowName1, HSV); bug
+		//imshow(windowName1, HSV);
+		setMouseCallback("Original Image", on_mouse, &p);
+		//delay 30ms so that screen can refresh.
+		//image will not appear without this waitKey() command
+		waitKey(30);
+//store image to matrix
+		capture.read(cameraFeed);
+		//convert frame from BGR to HSV colorspace
+		cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
+		//filter HSV image between values and store filtered image to
+		//threshold matrix
+		inRange(HSV, Scalar(H_MIN2, S_MIN2, V_MIN2), Scalar(H_MAX2, S_MAX2, V_MAX2), threshold);
+		//perform morphological operations on thresholded image to eliminate noise
+		//and emphasize the filtered object(s)
+		if (useMorphOps)
+			morphOps(threshold);
+		//pass in thresholded frame to our object tracking function
+		//this function will return the x and y coordinates of the
+		//filtered object
+		if (trackObjects)
+			trackFilteredObject(x, y, threshold, cameraFeed);
+
+		//show frames
+		imshow(windowName2, threshold);
+		imshow(windowName, cameraFeed);
+		//imshow(windowName1, HSV);
 		setMouseCallback("Original Image", on_mouse, &p);
 		//delay 30ms so that screen can refresh.
 		//image will not appear without this waitKey() command
@@ -250,4 +270,3 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
-
