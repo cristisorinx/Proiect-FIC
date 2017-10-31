@@ -5,6 +5,14 @@
 #include "opencv2/highgui/highgui.hpp"
 //#include <opencv2\cv.h>
 #include "opencv2/opencv.hpp"
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
+
+
 
 using namespace std;
 using namespace cv;
@@ -181,8 +189,23 @@ void trackFilteredObject(int &x, int &y, Mat threshold, Mat &cameraFeed) {
 		else putText(cameraFeed, "TOO MUCH NOISE! ADJUST FILTER", Point(0, 50), 1, 2, Scalar(0, 0, 255), 2);
 	}
 }
+
+
+void processCharacters(int sock, char *buff[], int nr){
+	int i;
+	for(i=0;i<nr;i++){
+    	send(sock, buff[i], strlen(buff[i]), 0);
+    	printf("Message sent\n");
+		sleep(1);
+	}
+}
+
+
+
+
 int main(int argc, char* argv[])
 {
+/*
 
 	//some boolean variables for different functionality within this
 	//program
@@ -209,10 +232,46 @@ int main(int argc, char* argv[])
 	capture.set(CV_CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT);
 	//start an infinite loop where webcam feed is copied to cameraFeed matrix
 	//all of our operations will be performed within this loop
-
-
-
+*/
+		
+	/*Creating the socket*/
+	struct sockaddr_in address;
+    int sock = 0, portNr;
+    struct sockaddr_in serv_addr; 
+	struct hostent *server;
 	
+	portNr = 20232;
+	sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0){
+        printf("\n Socket creation error \n");
+        exit(0);
+    }
+
+	server = gethostbyname("193.226.12.217");
+	if (server == NULL) {
+    	printf("ERROR, no such host\n"); 
+		exit(1); 
+	}
+ 
+	bzero((char *) &serv_addr, sizeof(serv_addr));
+	serv_addr.sin_family = AF_INET;
+	bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
+  
+    serv_addr.sin_port = htons(portNr);
+  
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    {
+        printf("\nConnection Failed \n");
+        exit(3);
+    }
+
+
+	char *message[] = {"s", "f", "s", "f", "s", "f", "s"};	
+	processCharacters(sock, message, 7);
+	
+	close(sock);
+	
+	/*
 	while (1) {
 
 
@@ -266,7 +325,7 @@ int main(int argc, char* argv[])
 		//delay 30ms so that screen can refresh.
 		//image will not appear without this waitKey() command
 		waitKey(30);
-	}
+	}*/
 
 	return 0;
 }
