@@ -267,7 +267,7 @@ int main(int argc, char* argv[])
 
 
 	char *message[] = {"s", "f", "s", "f", "s", "f", "s"};	
-	processCharacters(sock, message, 7);
+	processCharacters(sock, message, sizeof(message)/sizeof(message[0]));
 	
 	close(sock);
 	
