@@ -205,7 +205,7 @@ void processCharacters(int sock, char *buff[], int nr){
 
 int main(int argc, char* argv[])
 {
-/*
+
 
 	//some boolean variables for different functionality within this
 	//program
@@ -232,7 +232,7 @@ int main(int argc, char* argv[])
 	capture.set(CV_CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT);
 	//start an infinite loop where webcam feed is copied to cameraFeed matrix
 	//all of our operations will be performed within this loop
-*/
+
 		
 	/*Creating the socket*/
 	struct sockaddr_in address;
@@ -266,12 +266,11 @@ int main(int argc, char* argv[])
     }
 
 
-	char *message[] = {"s", "f", "s", "f", "s", "f", "s"};	
+	char *message[] = {"s", "f", "s"};	
 	processCharacters(sock, message, sizeof(message)/sizeof(message[0]));
 	
-	close(sock);
 	
-	/*
+	
 	while (1) {
 
 
@@ -325,7 +324,9 @@ int main(int argc, char* argv[])
 		//delay 30ms so that screen can refresh.
 		//image will not appear without this waitKey() command
 		waitKey(30);
-	}*/
+	}
+
+	close(sock);
 
 	return 0;
 }
