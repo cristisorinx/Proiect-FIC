@@ -289,7 +289,7 @@ int main(int argc, char* argv[])
 		//this function will return the x and y coordinates of the
 		//filtered object
 		if (trackObjects)
-			trackFilteredObject(x2, y2, threshold, cameraFeed);
+			trackFilteredObject(x, y, threshold, cameraFeed);
 
 		//show frames
 		imshow(windowName2, threshold);
@@ -299,7 +299,9 @@ int main(int argc, char* argv[])
 		//delay 30ms so that screen can refresh.
 		//image will not appear without this waitKey() command
 		waitKey(30);
-//store image to matrix
+
+
+		//store image to matrix
 		capture.read(cameraFeed);
 		//convert frame from BGR to HSV colorspace
 		cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
@@ -314,7 +316,7 @@ int main(int argc, char* argv[])
 		//this function will return the x and y coordinates of the
 		//filtered object
 		if (trackObjects)
-			trackFilteredObject(x, y, threshold, cameraFeed);
+			trackFilteredObject(x2, y2, threshold, cameraFeed);
 
 		//show frames
 		imshow(windowName2, threshold);
