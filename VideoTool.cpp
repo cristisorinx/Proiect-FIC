@@ -221,6 +221,7 @@ int main(int argc, char* argv[])
 	Mat threshold;
 	//x and y values for the location of the object
 	int x = 0, y = 0;
+	int x2 = 0, y2 = 0;
 	//create slider bars for HSV filtering
 	createTrackbars();
 	//video capture object to acquire webcam feed
@@ -239,7 +240,8 @@ int main(int argc, char* argv[])
     int sock = 0, portNr;
     struct sockaddr_in serv_addr; 
 	struct hostent *server;
-	
+	char *message[4];
+
 	portNr = 20232;
 	sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0){
@@ -266,8 +268,6 @@ int main(int argc, char* argv[])
     }
 
 
-	char *message[] = {"s", "f", "s"};	
-	processCharacters(sock, message, sizeof(message)/sizeof(message[0]));
 	
 	
 	
@@ -289,7 +289,7 @@ int main(int argc, char* argv[])
 		//this function will return the x and y coordinates of the
 		//filtered object
 		if (trackObjects)
-			trackFilteredObject(x, y, threshold, cameraFeed);
+			trackFilteredObject(x2, y2, threshold, cameraFeed);
 
 		//show frames
 		imshow(windowName2, threshold);
@@ -324,6 +324,12 @@ int main(int argc, char* argv[])
 		//delay 30ms so that screen can refresh.
 		//image will not appear without this waitKey() command
 		waitKey(30);
+
+		
+		
+		printf("x, y, x2, y2\n %d %d %d %d\n", x, y, x2, y2);
+		message[0] = "s";	
+		processCharacters(sock, message, sizeof(message)/sizeof(message[0]));
 	}
 
 	close(sock);
