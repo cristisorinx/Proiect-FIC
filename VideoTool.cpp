@@ -195,7 +195,7 @@ void processCharacters(int sock, char *buff[], int nr){
 	int i;
 	for(i=0;i<nr;i++){
     	send(sock, buff[i], strlen(buff[i]), 0);
-    	printf("Message sent\n");
+    	printf("Message sent: %s\n", buff[i]);
 		sleep(1);
 	}
 }
@@ -240,7 +240,7 @@ int main(int argc, char* argv[])
     int sock = 0, portNr;
     struct sockaddr_in serv_addr; 
 	struct hostent *server;
-	char *message[4];
+	char *message[1];
 
 	portNr = 20232;
 	sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -305,7 +305,7 @@ int main(int argc, char* argv[])
 			trackFilteredObject(x2, y2, threshold, cameraFeed);
 
 		//show frames
-		imshow(windowName2, threshold);
+		//imshow(windowName2, threshold);
 		imshow(windowName, cameraFeed);
 		//imshow(windowName1, HSV);
 		setMouseCallback("Original Image", on_mouse, &p);
@@ -315,8 +315,49 @@ int main(int argc, char* argv[])
 
 		
 		
-		printf("x, y, x2, y2\n %d %d %d %d\n", x, y, x2, y2);
-		message[0] = "s";	
+		//printf("x, y, x2, y2\n %d %d %d %d\n", x, y, x2, y2);
+
+		message[0] = "f";
+		processCharacters(sock, message, sizeof(message)/sizeof(message[0]));		
+	
+		if(y == y2){
+			if(x < x2){
+				message[0] =  "l";
+			}
+			if(x > x2){
+				message[0] = "r";		
+			}
+		}	
+		
+		if(x == x2){
+			if(y < y2){
+				message[0] = "f";
+			}
+			if(y > y2){
+				message[0] = "b";		
+			}
+		}	
+
+		if(y < y2){
+			if(x < x2){
+				message[0] = "l";
+			}
+			if(x > x2){
+				message[0] = "f";
+			}		
+		}
+
+		if(y > y2){
+			if(x < x2){
+				message[0] = "f";
+			}
+			if(x > x2){
+				message[0] = "f";
+			}		
+		}
+
+
+		
 		processCharacters(sock, message, sizeof(message)/sizeof(message[0]));
 	}
 
