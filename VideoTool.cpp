@@ -323,6 +323,49 @@ void processCharacters(int sock, char *buff[], int nr){
 	}
 }*/
 
+
+char * strategie(int x, int y, int x2, int y2){
+	char *message[];
+	if(y == y2){
+ 		if(x < x2){
+			message[0] =  "l";
+		}
+		if(x > x2){
+ 			message[0] = "r";		
+ 		}
+ 	}	
+ 		
+ 	if(x == x2){
+ 		if(y < y2){
+ 			message[0] = "f";
+ 		}
+ 		if(y > y2){
+ 			message[0] = "b";		
+ 		}
+ 	}	
+	
+ 	if(y < y2){
+ 		if(x < x2){
+ 			message[0] = "l";
+ 		}
+ 		if(x > x2){
+ 			message[0] = "f";
+		}		
+	}
+ 
+ 	if(y > y2){
+		if(x < x2){
+			message[0] = "f";
+ 		}
+ 		if(x > x2){
+ 			message[0] = "f";
+		}		
+	}
+	return message;
+}
+
+
+
 int main(int argc, char* argv[])
 {
    int sock = 0, portNr, n;
@@ -365,11 +408,12 @@ int main(int argc, char* argv[])
        printf("Please enter the message: ");
        bzero(buffer, 256);
        fgets(buffer, 255, stdin);
-
-       /* Now read server response */
        printf("%s\n", buffer);
-   
-        char comenzi[50];
+
+	   
+       /* Now read server response */
+        char * comenzi[];
+		
         detect_position();
         initPos1 = myPos1;
         initPos2 = myPos2;
@@ -378,7 +422,11 @@ int main(int argc, char* argv[])
         detect_position();
         printf("initial coords: %d, %d\n", initPos1, initPos2);
 		printf("current coords: %d, %d\n", myPos1, myPos2);
-        //comenzi=strategie();
+		
+        comenzi = strategie(myPos1, myPos2, enemyPos1, enemyPos2);
+        move(comenzi, sock);
+		
+		
         //socket_con(comenzi);
 	
 	close(sock);
