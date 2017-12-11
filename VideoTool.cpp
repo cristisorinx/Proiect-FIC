@@ -5,30 +5,23 @@
 #include "opencv2/highgui/highgui.hpp"
 //#include <opencv2\cv.h>
 #include "opencv2/opencv.hpp"
-
-#include <stdio.h>
-#include <stdlib.h>
-
 #include <sys/types.h>
 #include <sys/socket.h>
-
-
-#include <netdb.h>
-#include <netinet/in.h>
-
-#include <string.h>
-#include <stdlib.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
 #include <unistd.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
+
+
 
 using namespace std;
 using namespace cv;
-
-int myPos1, myPos2;
-int initPos1, initPos2;
 //initial min and max HSV filter values.
 //these will be changed using trackbars
+int initPosX, initPosY;
+int myPosX, myPosY;
+int enemyPosX, enemyPosY;
+
 int H_MIN = 169;
 int H_MAX = 185;
 int S_MIN = 20;
@@ -55,7 +48,6 @@ const std::string windowName1 = "HSV Image";
 const std::string windowName2 = "Thresholded Image";
 const std::string windowName3 = "After Morphological Operations";
 const std::string trackbarWindowName = "Trackbars";
-
 
 
 void on_mouse(int e, int x, int y, int d, void *ptr)
@@ -106,7 +98,6 @@ void createTrackbars() {
 
 
 }
-
 void drawObject(int x, int y, Mat &frame) {
 
 	//use some of the openCV drawing functions to draw crosshairs
@@ -153,7 +144,6 @@ void morphOps(Mat &thresh) {
 
 
 }
-
 void trackFilteredObject(int &x, int &y, Mat threshold, Mat &cameraFeed) {
 
 	Mat temp;
@@ -203,8 +193,20 @@ void trackFilteredObject(int &x, int &y, Mat threshold, Mat &cameraFeed) {
 		else putText(cameraFeed, "TOO MUCH NOISE! ADJUST FILTER", Point(0, 50), 1, 2, Scalar(0, 0, 255), 2);
 	}
 }
-void detect_position(){
-    bool trackObjects = true;
+
+
+void processCharacters(int sock, char *buff[], int nr){
+	int i;
+	for(i=0;i<nr;i++){
+    	send(sock, buff[i], strlen(buff[i]), 0);
+    	printf("Message sent: %s\n", buff[i]);
+		sleep(1);
+	}
+}
+
+
+void detectPosition(){
+        bool trackObjects = true;
 	bool useMorphOps = true;
 
 	Point p;
@@ -251,8 +253,8 @@ void detect_position(){
 		if (trackObjects)
 {
 			trackFilteredObject(x, y, threshold, cameraFeed);
-                  myPos1=x;
-                  myPos2=y;
+                  myPosX=x;
+                  myPosY=y;
 }
 		//show frames
 		imshow(windowName2, threshold);
@@ -279,8 +281,8 @@ void detect_position(){
 		if (trackObjects)
                  {
 			trackFilteredObject(x, y, threshold, cameraFeed);
-                  enemyPos1=x;
-                  enemyPos2=y;
+                  enemyPosX=x;
+                  enemyPosY=y;
                  } 
 		//show frames
 		imshow(windowName2, threshold);
@@ -290,145 +292,109 @@ void detect_position(){
 		//delay 30ms so that screen can refresh.
 		//image will not appear without this waitKey() command
 		waitKey(30);
-exit(0);
+	exit(0);
 	}
 }
 
 
-
-void move(char *buffer ,int sock){
-  int i, n;
-  for(i=0;i<strlen(buffer)-1;i++){
-	char buffm[50];
-  
-	if(buffer[i]=='l'||buffer[i]=='r'||buffer[i]=='f'||buffer[i]=='b'||buffer[i]=='s'){
-	  strncpy(buffm,&buffer[i],3);
-	  buffm[1]='\0';
-	  printf("%s \n",buffm);
-	  
-	  n = write(sock, buffm, 1);
-	  sleep(1);
-	}
-  }
-  n = write(sock, "s", 1);
-}
-
-/*
-void processCharacters(int sock, char *buff[], int nr){
-	int i;
-	for(i=0;i<nr;i++){
-    	send(sock, buff[i], strlen(buff[i]), 0);
-    	printf("Message sent: %s\n", buff[i]);
-		sleep(1);
-	}
-}*/
-
-
-char * strategie(int x, int y, int x2, int y2){
-	char *message[];
-	if(y == y2){
- 		if(x < x2){
+void strategy(int myX, myY, enX, enY){
+	char *message[1];
+	
+	if(myY == enY){
+		if(myX < enX){
 			message[0] =  "l";
 		}
-		if(x > x2){
- 			message[0] = "r";		
- 		}
- 	}	
- 		
- 	if(x == x2){
- 		if(y < y2){
- 			message[0] = "f";
- 		}
- 		if(y > y2){
- 			message[0] = "b";		
- 		}
- 	}	
-	
- 	if(y < y2){
- 		if(x < x2){
- 			message[0] = "l";
- 		}
- 		if(x > x2){
- 			message[0] = "f";
-		}		
-	}
- 
- 	if(y > y2){
-		if(x < x2){
+		if(myX > enX){
+			message[0] = "r";		
+		}
+	}	
+		
+	if(myX == enX){
+		if(myY < enY){
 			message[0] = "f";
- 		}
- 		if(x > x2){
- 			message[0] = "f";
+		}
+		if(myY > enY){
+			message[0] = "b";		
+		}
+	}	
+
+	if(myY < enY){
+		if(myX < enX){
+			message[0] = "l";
+		}
+		if(myX > enX){
+			message[0] = "f";
 		}		
 	}
-	return message;
+
+	if(myY > enY){
+		if(myX < enX){
+			message[0] = "f";
+		}
+		if(myX > enX){
+			message[0] = "f";
+		}		
+	}
+		
+	processCharacters(sock, message, sizeof(message)/sizeof(message[0]));
 }
-
-
 
 int main(int argc, char* argv[])
 {
-   int sock = 0, portNr, n;
-   struct sockaddr_in serv_addr;
-   struct hostent *server;
 
-   char buffer[256];
-
-
-   portNr = 20236;
-
-   /* Create a socket point */
-   sock = socket(AF_INET, SOCK_STREAM, 0);
-
-   if (sock < 0) {
-      perror("ERROR opening socket");
-      exit(1);
-   }
-
-   server = gethostbyname("193.226.12.217");
-   if (server == NULL) {
-      fprintf(stderr,"ERROR, no such host\n");
-      exit(0);
-   }
-
-   bzero((char *) &serv_addr, sizeof(serv_addr));
-   serv_addr.sin_family = AF_INET;
-   bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
-   serv_addr.sin_port = htons(portNr);
-
-   
-   if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-      perror("ERROR connecting");
-      exit(1);
-   }
-
-   /* Now ask for a message from the user, this message
-      * will be read by server
-   */
-       printf("Please enter the message: ");
-       bzero(buffer, 256);
-       fgets(buffer, 255, stdin);
-       printf("%s\n", buffer);
-
-	   
-       /* Now read server response */
-        char * comenzi[];
 		
-        detect_position();
-        initPos1 = myPos1;
-        initPos2 = myPos2;
-		
-        move(buffer, sock);
-        detect_position();
-        printf("initial coords: %d, %d\n", initPos1, initPos2);
-		printf("current coords: %d, %d\n", myPos1, myPos2);
-		
-        comenzi = strategie(myPos1, myPos2, enemyPos1, enemyPos2);
-        move(comenzi, sock);
+	/*Creating the socket*/
+	struct sockaddr_in address;
+    int sock = 0, portNr;
+    struct sockaddr_in serv_addr; 
+	struct hostent *server;
+	char *message[1];
+
+	portNr = 20232;
+	sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0){
+        printf("\n Socket creation error \n");
+        exit(0);
+    }
+
+	server = gethostbyname("193.226.12.217");
+	if (server == NULL) {
+    	printf("ERROR, no such host\n"); 
+		exit(1); 
+	}
+ 
+	bzero((char *) &serv_addr, sizeof(serv_addr));
+	serv_addr.sin_family = AF_INET;
+	bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
+  
+    serv_addr.sin_port = htons(portNr);
+  
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    {
+        printf("\nConnection Failed \n");
+        exit(3);
+    }
+
 		
 		
-        //socket_con(comenzi);
+		//printf("x, y, x2, y2\n %d %d %d %d\n", x, y, x2, y2);
 	
+		detectPosition();
+		message[0] = "f";
+		processCharacters(sock, message, sizeof(message)/sizeof(message[0]));		
+		
+		initPosX = myPosX;
+		initPosY = myPosY;
+		detectPosition();
+		
+		
+        printf("initial coords: %d , %d n", initPosX, initPosY);
+		printf("current coords: %d , %d\n", myPosX, myPosY);
+		
+		strategy();
+		
+	
+
 	close(sock);
 
 	return 0;
