@@ -24,12 +24,11 @@
 
 using namespace std;
 using namespace cv;
+
+int myPos1, myPos2;
+int initPos1, initPos2;
 //initial min and max HSV filter values.
 //these will be changed using trackbars
-int myInitPos1, myInitPos2;
-int myPos1, myPos2;
-int enemyPos1, enamyPos2;
-
 int H_MIN = 169;
 int H_MAX = 185;
 int S_MIN = 20;
@@ -56,7 +55,6 @@ const std::string windowName1 = "HSV Image";
 const std::string windowName2 = "Thresholded Image";
 const std::string windowName3 = "After Morphological Operations";
 const std::string trackbarWindowName = "Trackbars";
-
 
 
 
@@ -108,6 +106,7 @@ void createTrackbars() {
 
 
 }
+
 void drawObject(int x, int y, Mat &frame) {
 
 	//use some of the openCV drawing functions to draw crosshairs
@@ -154,6 +153,7 @@ void morphOps(Mat &thresh) {
 
 
 }
+
 void trackFilteredObject(int &x, int &y, Mat threshold, Mat &cameraFeed) {
 
 	Mat temp;
@@ -203,8 +203,7 @@ void trackFilteredObject(int &x, int &y, Mat threshold, Mat &cameraFeed) {
 		else putText(cameraFeed, "TOO MUCH NOISE! ADJUST FILTER", Point(0, 50), 1, 2, Scalar(0, 0, 255), 2);
 	}
 }
-void detect_position()
-{
+void detect_position(){
     bool trackObjects = true;
 	bool useMorphOps = true;
 
@@ -291,54 +290,61 @@ void detect_position()
 		//delay 30ms so that screen can refresh.
 		//image will not appear without this waitKey() command
 		waitKey(30);
-		exit(0);
+exit(0);
 	}
 }
 
-void move(char *buffer ,int sockfd)
-{
+
+
+void move(char *buffer ,int sock){
   int i, n;
-  for(i=0; i<strlen(buffer) - 1; i++){
+  for(i=0;i<strlen(buffer)-1;i++){
 	char buffm[50];
-	if(buffer[i]=='l' || buffer[i]=='r' || buffer[i]=='f' || buffer[i]=='b' || buffer[i]=='s'){
-		strncpy(buffm, &buffer[i], 3);
-		buffm[1] = '\0';
-		printf("%s \n", buffm);
-		n = write(sockfd, buffm, 1);
-		sleep(1);
-		if (n < 0){
-			perror("ERROR writing to socket");
-			exit(1);
-		}
+  
+	if(buffer[i]=='l'||buffer[i]=='r'||buffer[i]=='f'||buffer[i]=='b'||buffer[i]=='s'){
+	  strncpy(buffm,&buffer[i],3);
+	  buffm[1]='\0';
+	  printf("%s \n",buffm);
+	  
+	  n = write(sock, buffm, 1);
+	  sleep(1);
 	}
   }
-  n = write(sockfd, "s", 1);
+  n = write(sock, "s", 1);
 }
 
-
+/*
+void processCharacters(int sock, char *buff[], int nr){
+	int i;
+	for(i=0;i<nr;i++){
+    	send(sock, buff[i], strlen(buff[i]), 0);
+    	printf("Message sent: %s\n", buff[i]);
+		sleep(1);
+	}
+}*/
 
 int main(int argc, char* argv[])
 {
-   int sockfd, portNr, n;
+   int sock = 0, portNr, n;
    struct sockaddr_in serv_addr;
    struct hostent *server;
 
    char buffer[256];
 
+
    portNr = 20236;
 
    /* Create a socket point */
-   sockfd = socket(AF_INET, SOCK_STREAM, 0);
+   sock = socket(AF_INET, SOCK_STREAM, 0);
 
-   if (sockfd < 0) {
+   if (sock < 0) {
       perror("ERROR opening socket");
       exit(1);
    }
 
-   server = gethostbyname(argv[1]);
-
+   server = gethostbyname("193.226.12.217");
    if (server == NULL) {
-      fprintf(stderr,"Server host error\n");
+      fprintf(stderr,"ERROR, no such host\n");
       exit(0);
    }
 
@@ -347,31 +353,35 @@ int main(int argc, char* argv[])
    bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
    serv_addr.sin_port = htons(portNr);
 
-   /* Now connect to the server */
-   if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-      perror("Connection error");
+   
+   if (connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+      perror("ERROR connecting");
       exit(1);
    }
 
-   /* Now ask for a message from the user, this message will be read by server */
+   /* Now ask for a message from the user, this message
+      * will be read by server
+   */
        printf("Please enter the message: ");
-       bzero(buffer,256);
-       fgets(buffer,255,stdin);
+       bzero(buffer, 256);
+       fgets(buffer, 255, stdin);
 
-		/* Now read server response */
-		printf("%s\n",buffer);
+       /* Now read server response */
+       printf("%s\n", buffer);
    
-        //char commands[50];
+        char comenzi[50];
         detect_position();
-        myInitPos1 = myPos1;
-        myInitPos2 = myPos2;
-        move(buffer, sockfd);
+        initPos1 = myPos1;
+        initPos2 = myPos2;
+		
+        move(buffer, sock);
         detect_position();
-        printf("initial coords: %d , %d\n", myInitPos1, myInitPos2);
-		printf("current coords: %d , %d\n", myPos1, myPos2);
+        printf("initial coords: %d, %d\n", initPos1, initPos2);
+		printf("current coords: %d, %d\n", myPos1, myPos2);
         //comenzi=strategie();
         //socket_con(comenzi);
 	
+	close(sock);
 
 	return 0;
 }
